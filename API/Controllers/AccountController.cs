@@ -17,12 +17,12 @@ namespace API.Controllers
     public class AccountController : BaseApiController
     {
         private readonly DataContext _context;
-        public readonly ITokenService _TokenService;
+        public readonly ITokenService _tokenService;
         private readonly IMapper _mapper;
         public AccountController(DataContext context, ITokenService tokenService, IMapper mapper)
         {
             _mapper = mapper;
-            _TokenService = tokenService;
+            _tokenService = tokenService;
             _context = context;
         }
 
@@ -38,6 +38,7 @@ namespace API.Controllers
                user.Username = registerDto.Username.ToLower();
                 user.PasswordHash= hmac.ComputeHash(Encoding.UTF8.GetBytes(registerDto.Password));
                 user.PasswordSalt = hmac.Key;     
+                
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -45,8 +46,9 @@ namespace API.Controllers
             return new UserDto
             {
                 Username = user.Username,
-                token = _TokenService.CreateToken(user),
+                Token = _tokenService.CreateToken(user),
                 KnownAs = user.KnownAs,
+                Gender = user.Gender
             };
         }
 
@@ -65,11 +67,14 @@ namespace API.Controllers
                 if (computedHash[i] != user.PasswordHash[i])
                     return Unauthorized("Invalid Password");
             }
-            return new UserDto()
+            return new UserDto
             {
                 Username = user.Username,
-                token = _TokenService.CreateToken(user),
-                PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url
+                Token = _tokenService.CreateToken(user),
+                PhotoUrl = user.Photos.FirstOrDefault(x => x.IsMain)?.Url,
+                KnownAs = user.KnownAs,
+                Gender = user.Gender
+                
             };
              
         }    
